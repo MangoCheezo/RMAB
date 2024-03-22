@@ -1,24 +1,77 @@
-P0 = [ 0.9   0.1    0     0      0;
-       0.05  0.9    0.05  0      0;
-       0     0.05   0.9   0.05   0;
-       0     0      0.05  0.9    0.05;
-       0     0      0     0.1    0.9 ]  # action 0 transition probability not push video
+P0_football = [ 0.9   0.1    0     0      0;
+                0.05  0.9    0.05  0      0;
+                0     0.05   0.9   0.05   0;
+                0     0      0.05  0.9    0.05;
+                0     0      0     0.1    0.9 ]  # action 0 transition probability not push video
 
-R0 = [ 0     0     0     0     0;
-       0     0     0     0     0;
-       0     0     0     0     0;
-       0     0     0     0     0;
-       0     0     0     0     0 ]  #action 0 rewards
+R0_football = [ 0     0     0     0     0;
+                0     0     0     0     0;
+                0     0     0     0     0;
+                0     0     0     0     0;
+                0     0     0     0     0 ]  #action 0 rewards
 
-P1 = [ 0.4   0.6   0     0     0;
-       0.2   0.4   0.4   0     0;
-       0     0.1   0.4   0.5   0;
-       0     0     0.1   0.1   0.8;
-       0     0     0     0.2   0.8 ]  # action 1 transition probability push video
+P1_football = [ 0.4   0.6   0     0     0;
+                0.2   0.4   0.4   0     0;
+                0     0.1   0.4   0.5   0;
+                0     0     0.1   0.1   0.8;
+                0     0     0     0.2   0.8 ]  # action 1 transition probability push video
 
-R1 = [ 1     2     0     0     0;
-       -1    2     5     0     0;
-       0     -2    6     7     0;
-       0     0     1     7     9;
-       0     0     0     -2    12 ]   #action 1 rewards
+R1_football = [ 1     2     0     0     0;
+               -1     2     5     0     0;
+                0    -2     6     7     0;
+                0     0     1     7     9;
+                0     0     0    -2    12 ]   #action 1 rewards
 
+P0_basketball = [ 0.9   0.1    0     0      0;
+                  0.05  0.9    0.05  0      0;
+                  0     0.05   0.9   0.05   0;
+                  0     0      0.05  0.9    0.05;
+                  0     0      0     0.1    0.9 ]  # action 0 transition probability not push video
+
+R0_basketball = [ 0     0     0     0     0;
+                  0     0     0     0     0;
+                  0     0     0     0     0;
+                  0     0     0     0     0;
+                  0     0     0     0     0 ]  # action 0 rewards
+
+P1_basketball = [ 0.2   0.8   0     0     0;
+                  0.2   0.3   0.5   0     0;
+                  0     0.1   0.3   0.6   0;
+                  0     0     0.1   0.1   0.8;
+                  0     0     0     0.1   0.9 ]  # action 1 transition probability push video
+
+R1_basketball = [ 1     2     0     0     0;
+                 -1     2     5     0     0;
+                  0    -4     6     7     0;
+                  0     0     1     7     9;
+                  0     0     0    -3     12 ]   # action 1 rewards
+
+P0_volleyball = [ 0.9   0.1    0     0      0;
+                  0.05  0.9    0.05  0      0;
+                  0     0.05   0.9   0.05   0;
+                  0     0      0.05  0.9    0.05;
+                  0     0      0     0.1    0.9 ]  # action 0 transition probability not push video
+
+R0_volleyball = [ 0     0     0     0     0;
+                  0     0     0     0     0;
+                  0     0     0     0     0;
+                  0     0     0     0     0;
+                  0     0     0     0     0 ]  #action 0 rewards
+
+P1_volleyball = [ 0.4   0.6   0     0     0;
+                  0.4   0.3   0.3   0     0;
+                  0     0.3   0.4   0.3   0;
+                  0     0     0.3   0.3   0.4;
+                  0     0     0     0.2   0.8 ]  # action 1 transition probability push video
+
+R1_volleyball = [ 1     1     0     0     0;
+                 -1     2     4     0     0;
+                  0    -4     5     6     0;
+                  0     0     1     6     8;
+                  0     0     0    -3    10 ]   #action 1 rewards
+
+MPI_football = MPI(P0_football, R0_football, P1_football, R1_football, beta)
+
+MPI_basketball = MPI(P0_basketball, R0_basketball, P1_basketball, R1_basketball, beta)
+
+MPI_volleyball = MPI(P0_volleyball, R0_volleyball, P1_volleyball, R1_volleyball, beta)
