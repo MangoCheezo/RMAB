@@ -246,3 +246,5 @@ end
     return MPI_index
     
 end
+
+% We can get the Whittle index value for each state M1; M2; M3; M4; M5
