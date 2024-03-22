@@ -1,0 +1,440 @@
+beta = 0.99
+
+using StatsBase
+
+function simulate_state()
+ state = [3 3 3] #initial state
+state_football = zeros(Int64,1000)
+state_basketball = zeros(Int64,1000)
+state_volleyball = zeros(Int64,1000)
+total_reward = zeros(1000)
+matrix_state = zeros(Float64, 1, 5)
+
+state_football[1] = state[1]
+state_basketball[1] = state[2]
+state_volleyball[1] = state[3]
+
+
+for i in 2:1000
+    
+    choose = argmax(vec(state))
+    
+    if choose == 1
+        matrix_state[state[choose]] =  1
+        state_football[i]           =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P1_football)), 1)[1])
+        state[choose]               =  state_football[i]
+        total_reward[i]             =  R1_football[state_football[i-1],state_football[i]]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[2]]      =  1
+        state_basketball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_basketball)), 1)[1])
+        state[2]                    =  state_basketball[i]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[3]]      =  1
+        state_volleyball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_volleyball)), 1)[1])
+        state[3]                    =  state_volleyball[i]
+        matrix_state                =  zeros(Int, 1, 5)
+    end
+
+    if choose == 2
+        matrix_state[state[choose]] =  1
+        state_basketball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P1_basketball)), 1)[1])
+        state[choose]               =  state_basketball[i]
+        total_reward[i]             =  R1_basketball[state_basketball[i-1],state_basketball[i]]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[1]]      =  1
+        state_football[i]           =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_football)), 1)[1])
+        state[1]                    =  state_football[i]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[3]]      =  1
+        state_volleyball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_volleyball)), 1)[1])
+        state[3]                    =  state_volleyball[i]
+        matrix_state                =  zeros(Int, 1, 5)
+    end
+    
+    if choose == 3
+        matrix_state[state[choose]] =  1
+        state_volleyball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P1_volleyball)), 1)[1])
+        state[choose]               =  state_volleyball[i]
+        total_reward[i]             =  R1_volleyball[state_volleyball[i-1],state_volleyball[i]]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[1]]      =  1
+        state_football[i]           =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_football)), 1)[1])
+        state[1]                    =  state_football[i]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[2]]      =  1
+        state_basketball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_basketball)), 1)[1])
+        state[2]                    =  state_basketball[i]
+        matrix_state                =  zeros(Int, 1, 5)
+    end
+
+end
+
+
+
+    return total_reward
+end
+
+
+function calculate_cumulative_reward_state()
+    total_reward = simulate_state()
+    cumulative_reward_state = zeros(1000)
+    discount_reward = zeros(1000)
+    cumulative_reward_state[1] = total_reward[1]
+
+    for i in 2:length(total_reward)
+        discount_reward[i] = total_reward[i]*beta^(i-1)
+        cumulative_reward_state[i] = cumulative_reward_state[i-1] + discount_reward[i]
+    end
+
+    return cumulative_reward_state
+end
+
+
+function monte_carlo_simulation_state(num_simulations)
+    cumulative_rewards_state = zeros(num_simulations,1000)
+
+    for sim in 1:num_simulations
+        total_reward = simulate_state()
+        cumulative_rewards_state[sim, :] = calculate_cumulative_reward_state()
+    end
+
+    return cumulative_rewards_state
+end
+
+num_simulations = 1000
+monte_carlo_results_state = monte_carlo_simulation_state(num_simulations)
+
+using Plots
+using Distributions
+gr()
+
+function plot_monte_carlo_results_state(cumulative_rewards, confidence_level)
+    num_simulations, num_time_steps = size(cumulative_rewards)
+
+    # Calculate mean and standard deviation at each time step
+    mean_rewards = mean(cumulative_rewards, dims=1)[:]
+    std_rewards = std(cumulative_rewards, dims=1)[:]
+    
+    # Calculate confidence interval bounds
+    z_score = quantile(Normal(), 1 - (1 - confidence_level) / 2)
+    margin_of_error = z_score * std_rewards / sqrt(num_simulations)
+    
+    lower_bound = mean_rewards - margin_of_error
+    upper_bound = mean_rewards + margin_of_error
+
+    # Plot the mean with confidence interval
+     plot(1:num_time_steps, mean_rewards, ribbon=(margin_of_error, margin_of_error), fillalpha=0.2, label="CI of Rewards state")
+    #plot(1:num_time_steps, mean_rewards, label="State")
+    
+    # Plot the actual cumulative rewards from each simulation
+    #plot!(1:num_time_steps, cumulative_rewards, alpha=0.3, label="Simulations")
+    
+    xlabel!("Time Step")
+    ylabel!("Cumulative Reward")
+    title!("Monte Carlo Simulation Results")
+
+    display(Plots.plot!())
+end
+
+using StatsBase
+
+function simulate_MPI()
+state = [3 3 3] #initial state
+state_football = zeros(Int64,1000)
+state_basketball = zeros(Int64,1000)
+state_volleyball = zeros(Int64,1000)
+total_reward = zeros(1000)
+matrix_state = zeros(Float64, 1, 5)
+
+state_football[1] = state[1]
+state_basketball[1] = state[2]
+state_volleyball[1] = state[3]
+
+
+for i in 2:1000
+        
+    MPI_index = MPI_football[state[1]], MPI_basketball[state[2]], MPI_volleyball[state[3]]
+    choose    = argmax(MPI_index)
+    
+    if choose == 1
+        matrix_state[state[choose]] =  1
+        state_football[i]           =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P1_football)), 1)[1])
+        state[choose]               =  state_football[i]
+        total_reward[i]             =  R1_football[state_football[i-1],state_football[i]]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[2]]      =  1
+        state_basketball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_basketball)), 1)[1])
+        state[2]                    =  state_basketball[i]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[3]]      =  1
+        state_volleyball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_volleyball)), 1)[1])
+        state[3]                    =  state_volleyball[i]
+        matrix_state                =  zeros(Int, 1, 5)
+    end
+
+    if choose == 2
+        matrix_state[state[choose]] =  1
+        state_basketball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P1_basketball)), 1)[1])
+        state[choose]               =  state_basketball[i]
+        total_reward[i]             =  R1_basketball[state_basketball[i-1],state_basketball[i]]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[1]]      =  1
+        state_football[i]           =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_football)), 1)[1])
+        state[1]                    =  state_football[i]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[3]]      =  1
+        state_volleyball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_volleyball)), 1)[1])
+        state[3]                    =  state_volleyball[i]
+        matrix_state                =  zeros(Int, 1, 5)
+    end
+    
+    if choose == 3
+        matrix_state[state[choose]] =  1
+        state_volleyball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P1_volleyball)), 1)[1])
+        state[choose]               =  state_volleyball[i]
+        total_reward[i]             =  R1_volleyball[state_volleyball[i-1],state_volleyball[i]]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[1]]      =  1
+        state_football[i]           =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_football)), 1)[1])
+        state[1]                    =  state_football[i]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[2]]      =  1
+        state_basketball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_basketball)), 1)[1])
+        state[2]                    =  state_basketball[i]
+        matrix_state                =  zeros(Int, 1, 5)
+    end
+
+end
+
+    return total_reward
+end
+
+
+function calculate_cumulative_reward_MPI()
+    total_reward = simulate_MPI()
+    cumulative_reward_MPI = zeros(1000)
+    discount_reward = zeros(1000)
+    cumulative_reward_MPI[1] = total_reward[1]
+
+    for i in 2:length(total_reward)
+        discount_reward[i] = total_reward[i]*beta^(i-1)
+        cumulative_reward_MPI[i] = cumulative_reward_MPI[i-1] + discount_reward[i]
+    end
+
+    return cumulative_reward_MPI
+end
+
+function monte_carlo_simulation_MPI(num_simulations)
+    cumulative_rewards_MPI = zeros(num_simulations,1000)
+
+    for sim in 1:num_simulations
+        total_reward = simulate_MPI()
+        cumulative_rewards_MPI[sim, :] = calculate_cumulative_reward_MPI()
+    end
+
+    return cumulative_rewards_MPI
+end
+
+
+monte_carlo_results_MPI = monte_carlo_simulation_MPI(num_simulations)
+
+using Plots
+using Distributions
+gr()
+
+function plot_monte_carlo_results_MPI(cumulative_rewards, confidence_level)
+    num_simulations, num_time_steps = size(cumulative_rewards)
+
+    # Calculate mean and standard deviation at each time step
+    mean_rewards = mean(cumulative_rewards, dims=1)[:]
+    std_rewards = std(cumulative_rewards, dims=1)[:]
+    
+    # Calculate confidence interval bounds
+    z_score = quantile(Normal(), 1 - (1 - confidence_level) / 2)
+    margin_of_error = z_score * std_rewards / sqrt(num_simulations)
+    
+    lower_bound = mean_rewards - margin_of_error
+    upper_bound = mean_rewards + margin_of_error
+
+    # Plot the mean with confidence interval
+    plot!(1:num_time_steps, mean_rewards, ribbon=(margin_of_error, margin_of_error), fillalpha=0.2, label="CI of Rewards MPI")
+    #plot!(1:num_time_steps, mean_rewards, label="MPI")
+    
+    # Plot the actual cumulative rewards from each simulation
+    #plot!(1:num_time_steps, cumulative_rewards, alpha=0.3, label="Simulations")
+    
+    xlabel!("Time Step")
+    ylabel!("Cumulative Reward")
+    title!("Monte Carlo Simulation Results")
+
+    display(Plots.plot!())
+end
+
+using StatsBase
+
+function simulate_expected()
+state = [3 3 3] #initial state
+state_football = zeros(Int64,1000)
+state_basketball = zeros(Int64,1000)
+state_volleyball = zeros(Int64,1000)
+total_reward = zeros(1000)
+matrix_state = zeros(Float64, 1, 5)
+
+state_football[1] = state[1]
+state_basketball[1] = state[2]
+state_volleyball[1] = state[3]
+
+
+for i in 2:1000
+
+    Expected_reward = MPI_football[6][state[1]], MPI_basketball[6][state[2]], MPI_volleyball[6][state[3]]
+    choose          = argmax(Expected_reward)
+    
+    if choose == 1
+        matrix_state[state[choose]] =  1
+        state_football[i]           =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P1_football)), 1)[1])
+        state[choose]               =  state_football[i]
+        total_reward[i]             =  R1_football[state_football[i-1],state_football[i]]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[2]]      =  1
+        state_basketball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_basketball)), 1)[1])
+        state[2]                    =  state_basketball[i]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[3]]      =  1
+        state_volleyball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_volleyball)), 1)[1])
+        state[3]                    =  state_volleyball[i]
+        matrix_state                =  zeros(Int, 1, 5)
+    end
+
+    if choose == 2
+        matrix_state[state[choose]] =  1
+        state_basketball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P1_basketball)), 1)[1])
+        state[choose]               =  state_basketball[i]
+        total_reward[i]             =  R1_basketball[state_basketball[i-1],state_basketball[i]]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[1]]      =  1
+        state_football[i]           =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_football)), 1)[1])
+        state[1]                    =  state_football[i]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[3]]      =  1
+        state_volleyball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_volleyball)), 1)[1])
+        state[3]                    =  state_volleyball[i]
+        matrix_state                =  zeros(Int, 1, 5)
+    end
+    
+    if choose == 3
+        matrix_state[state[choose]] =  1
+        state_volleyball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P1_volleyball)), 1)[1])
+        state[choose]               =  state_volleyball[i]
+        total_reward[i]             =  R1_volleyball[state_volleyball[i-1],state_volleyball[i]]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[1]]      =  1
+        state_football[i]           =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_football)), 1)[1])
+        state[1]                    =  state_football[i]
+        matrix_state                =  zeros(Int, 1, 5)
+
+        matrix_state[state[2]]      =  1
+        state_basketball[i]         =  float(sample( [1,2,3,4,5], Weights(vec(matrix_state * P0_basketball)), 1)[1])
+        state[2]                    =  state_basketball[i]
+        matrix_state                =  zeros(Int, 1, 5)
+    end
+
+end
+
+    return total_reward
+    
+end
+
+
+function calculate_cumulative_reward_expected()
+    total_reward = simulate_expected()
+    cumulative_reward_expected = zeros(1000)
+    discount_reward = zeros(1000)
+    cumulative_reward_expected[1] = total_reward[1]
+
+    for i in 2:length(total_reward)
+        discount_reward[i] = total_reward[i]*beta^(i-1)
+        cumulative_reward_expected[i] = cumulative_reward_expected[i-1] + discount_reward[i]
+    end
+
+    return cumulative_reward_expected
+end
+
+function monte_carlo_simulation_expected(num_simulations)
+    cumulative_rewards_expected = zeros(num_simulations,1000)
+
+    for sim in 1:num_simulations
+        total_reward = simulate_expected()
+        cumulative_rewards_expected[sim, :] = calculate_cumulative_reward_expected()
+    end
+
+    return cumulative_rewards_expected
+end
+
+
+monte_carlo_results_expected = monte_carlo_simulation_expected(num_simulations)
+
+using Plots
+using Distributions
+gr()
+
+function plot_monte_carlo_results_expected(cumulative_rewards, confidence_level)
+    num_simulations, num_time_steps = size(cumulative_rewards)
+
+    # Calculate mean and standard deviation at each time step
+    mean_rewards = mean(cumulative_rewards, dims=1)[:]
+    std_rewards = std(cumulative_rewards, dims=1)[:]
+    
+    # Calculate confidence interval bounds
+    z_score = quantile(Normal(), 1 - (1 - confidence_level) / 2)
+    margin_of_error = z_score * std_rewards / sqrt(num_simulations)
+    
+    lower_bound = mean_rewards - margin_of_error
+    upper_bound = mean_rewards + margin_of_error
+
+    # Plot the mean with confidence interval
+    plot!(1:num_time_steps, mean_rewards, ribbon=(margin_of_error, margin_of_error), fillalpha=0.2, label="CI of Rewards expected")
+    #plot!(1:num_time_steps, mean_rewards, label="Expected Reward")
+    
+    # Plot the actual cumulative rewards from each simulation
+    #plot!(1:num_time_steps, cumulative_rewards, alpha=0.3, label="Simulations")
+    
+    xlabel!("Time Step")
+    ylabel!("Cumulative Reward")
+    title!("Monte Carlo Simulation Results")
+
+    display(Plots.plot!())
+end
+
+confidence_level = 0.95
+function main()
+    
+    plot_monte_carlo_results_state(monte_carlo_results_state, confidence_level)
+
+    plot_monte_carlo_results_MPI(monte_carlo_results_MPI, confidence_level)
+
+    plot_monte_carlo_results_expected(monte_carlo_results_expected, confidence_level)
+    
+    #savefig("beta = 0.6 same beta.pdf")
+    display(current())
+end
+
+
+main()
